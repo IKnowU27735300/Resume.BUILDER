@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Builder - Edit & Regenerate Your Resume</title>
+    <meta name="description" content="Upload, edit, and regenerate your PDF resume with preserved formatting. Export to PDF or DOCX format.">
+    <link rel="stylesheet" href="resume-builder.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Back Button -->
+    <div class="back-nav">
+        <a href="index.html" class="back-btn">← Back to Hub</a>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">📄</span>
+                    Resume Builder
+                </h1>
+                <p class="tagline">Edit & Regenerate Your Resume with Perfect Formatting</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Upload Section -->
+            <section id="uploadSection" class="section upload-section active">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Upload Your Resume</h2>
+                        <p>Upload a PDF resume to start editing. We'll preserve your formatting.</p>
+                    </div>
+                    
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📤</div>
+                        <h3>Drag & Drop Your PDF Here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="fileInput" accept=".pdf" hidden>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose File
+                        </button>
+                        <div class="upload-info">
+                            <small>Maximum file size: 5 MB • PDF format only</small>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadProgress" class="upload-progress hidden">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p class="progress-text">Parsing your resume...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Edit Section -->
+            <section id="editSection" class="section edit-section hidden">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Edit Your Resume</h2>
+                        <p>Modify the fields below. Your formatting will be preserved.</p>
+                    </div>
+                    
+                    <div id="editForm" class="edit-form">
+                        <!-- Dynamic form fields will be inserted here -->
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="resetUpload()">
+                            ← Upload New Resume
+                        </button>
+                        <button class="btn btn-primary" onclick="showPreview()">
+                            Preview & Download →
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section id="previewSection" class="section preview-section hidden">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Preview & Download</h2>
+                        <p>Review your changes and download in your preferred format.</p>
+                    </div>
+                    
+                    <div id="warningsContainer" class="warnings-container hidden">
+                        <!-- Font warnings will appear here -->
+                    </div>
+                    
+                    <div class="preview-content">
+                        <div class="preview-message">
+                            <div class="success-icon">✓</div>
+                            <h3>Your Resume is Ready!</h3>
+                            <p>Click below to download in your preferred format.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="download-actions">
+                        <button class="btn btn-secondary" onclick="backToEdit()">
+                            ← Back to Edit
+                        </button>
+                        <div class="download-buttons">
+                            <button class="btn btn-primary" onclick="downloadPDF()">
+                                📄 Download PDF
+                            </button>
+                            <button class="btn btn-primary" onclick="downloadDOCX()">
+                                📝 Download DOCX
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="reset-container">
+                        <button class="btn btn-text" onclick="resetUpload()">
+                            Start Over with New Resume
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Resume Builder. Unlimited editing, no signup required.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Processing...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="resume-builder.js"></script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor with OCR - Extract & Edit Text from Images</title>
+    <meta name="description" content="Upload images, extract text with OCR, edit content, and regenerate with preserved formatting.">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Back Button -->
+    <div class="back-nav">
+        <a href="../index.html" class="back-btn">← Back to Hub</a>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">🖼️</span>
+                    Image Editor with OCR
+                </h1>
+                <p class="tagline">Extract Text, Edit Content & Regenerate Images</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Upload Section -->
+            <section id="uploadSection" class="section upload-section active">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Upload Your Image</h2>
+                        <p>Upload an image with text. We'll extract the text using OCR for editing.</p>
+                    </div>
+                    
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📤</div>
+                        <h3>Drag & Drop Your Image Here</h3>
+                        <p>or click to browse</p>
+                        <input type="file" id="fileInput" accept="image/png,image/jpeg,image/jpg,image/bmp,image/tiff" hidden>
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            Choose Image
+                        </button>
+                        <div class="upload-info">
+                            <small>Supported formats: PNG, JPEG, JPG, BMP, TIFF • OCR powered by Tesseract</small>
+                        </div>
+                    </div>
+                    
+                    <div id="uploadProgress" class="upload-progress hidden">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <p class="progress-text">Extracting text with OCR...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Edit Section -->
+            <section id="editSection" class="section edit-section hidden">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Edit Extracted Text</h2>
+                        <p>Modify the text fields below. The image will be regenerated with your changes.</p>
+                    </div>
+                    
+                    <div id="editForm" class="edit-form">
+                        <!-- Dynamic form fields will be inserted here -->
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-secondary" onclick="resetUpload()">
+                            ← Upload New Image
+                        </button>
+                        <button class="btn btn-primary" onclick="showPreview()">
+                            Preview & Download →
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preview Section -->
+            <section id="previewSection" class="section preview-section hidden">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h2>Preview & Download</h2>
+                        <p>Your edited image is ready for download.</p>
+                    </div>
+                    
+                    <div id="warningsContainer" class="warnings-container hidden">
+                        <!-- OCR warnings will appear here -->
+                    </div>
+                    
+                    <div class="preview-content">
+                        <div class="preview-message">
+                            <div class="success-icon">✓</div>
+                            <h3>Your Image is Ready!</h3>
+                            <p>Click below to download the edited image.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="download-actions">
+                        <button class="btn btn-secondary" onclick="backToEdit()">
+                            ← Back to Edit
+                        </button>
+                        <div class="download-buttons">
+                            <button class="btn btn-primary" onclick="downloadImage()">
+                                🖼️ Download Image
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="reset-container">
+                        <button class="btn btn-text" onclick="resetUpload()">
+                            Start Over with New Image
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Image Editor with OCR. Powered by Tesseract OCR.</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Processing...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
