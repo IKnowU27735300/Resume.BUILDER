@@ -1,15 +1,16 @@
 /**
- * Image Editor with OCR - Frontend Application Logic
- * Handles image upload, OCR extraction, form generation, and regeneration
+ * Resume Builder - Frontend Application Logic
+ * Handles file upload, form generation, and API communication
  */
 
 // Configuration
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // Global state
 let sessionId = null;
-let extractedData = null;
+let parsedData = null;
 let currentFields = [];
+let currentImages = [];
 
 // DOM Elements
 const uploadZone = document.getElementById('uploadZone');
@@ -77,20 +78,25 @@ function handleDrop(event) {
     uploadZone.classList.remove('drag-over');
     
     const file = event.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type === 'application/pdf') {
         uploadFile(file);
     } else {
-        showToast('Please upload an image file', 'error');
+        showToast('Please upload a PDF file', 'error');
     }
 }
 
 /**
- * Upload file to server for OCR extraction
+ * Upload file to server
  */
 async function uploadFile(file) {
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-        showToast('Only image files are allowed', 'error');
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('File size exceeds 5 MB limit', 'error');
+        return;
+    }
+    
+    if (file.type !== 'application/pdf') {
+        showToast('Only PDF files are allowed', 'error');
         return;
     }
     
@@ -101,7 +107,7 @@ async function uploadFile(file) {
     
     // Animate progress
     setTimeout(() => {
-        progressFill.style.transition = 'width 3s ease-in-out';
+        progressFill.style.transition = 'width 2s ease-in-out';
         progressFill.style.width = '70%';
     }, 100);
     
@@ -127,11 +133,11 @@ async function uploadFile(file) {
         
         // Store session data
         sessionId = data.sessionId;
-        extractedData = data.data;
+        parsedData = data.data;
         
         // Show success and transition to edit
         setTimeout(() => {
-            showToast(data.message || 'Text extracted successfully!', 'success');
+            showToast('Resume parsed successfully!', 'success');
             generateEditForm();
             showSection('edit');
             uploadProgress.classList.add('hidden');
@@ -145,11 +151,12 @@ async function uploadFile(file) {
 }
 
 /**
- * Generate edit form from extracted OCR data
+ * Generate edit form from parsed data
  */
 function generateEditForm() {
     editForm.innerHTML = '';
-    currentFields = extractedData.fields;
+    currentFields = parsedData.fields;
+    currentImages = parsedData.images;
     
     // Add text fields
     currentFields.forEach((field, index) => {
@@ -160,15 +167,6 @@ function generateEditForm() {
         label.className = 'form-label';
         label.textContent = field.label;
         label.setAttribute('for', field.id);
-        
-        // Add confidence indicator if low
-        if (field.confidence && field.confidence < 70) {
-            const confBadge = document.createElement('span');
-            confBadge.className = 'confidence-badge low';
-            confBadge.textContent = ` (${field.confidence}% confidence)`;
-            confBadge.style.cssText = 'color: #f59e0b; font-size: 0.75rem; font-weight: normal;';
-            label.appendChild(confBadge);
-        }
         
         const isMultiline = field.value.length > 100;
         const input = document.createElement(isMultiline ? 'textarea' : 'input');
@@ -191,25 +189,56 @@ function generateEditForm() {
         editForm.appendChild(formGroup);
     });
     
-    // Add info message if no fields found
-    if (currentFields.length === 0) {
-        const noFieldsMsg = document.createElement('div');
-        noFieldsMsg.className = 'no-fields-message';
-        noFieldsMsg.style.cssText = 'text-align: center; padding: 40px; color: var(--text-muted);';
-        noFieldsMsg.innerHTML = '<p>No text was detected in the image.</p><p>Please try uploading a clearer image with readable text.</p>';
-        editForm.appendChild(noFieldsMsg);
-    }
+    // Add image upload fields
+    currentImages.forEach((image, index) => {
+        const formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        
+        const imageGroup = document.createElement('div');
+        imageGroup.className = 'image-upload-group';
+        
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        label.textContent = `Image ${index + 1} - Replace (Optional)`;
+        
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.className = 'form-input';
+        input.dataset.imageIndex = index;
+        
+        // Preview current image
+        const preview = document.createElement('img');
+        preview.className = 'image-preview';
+        preview.src = `data:image/${image.format};base64,${image.data}`;
+        preview.alt = `Image ${index + 1}`;
+        
+        // Handle image replacement
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const base64 = event.target.result.split(',')[1];
+                    currentImages[index].data = base64;
+                    preview.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        imageGroup.appendChild(label);
+        imageGroup.appendChild(input);
+        imageGroup.appendChild(preview);
+        formGroup.appendChild(imageGroup);
+        editForm.appendChild(formGroup);
+    });
 }
 
 /**
  * Show preview section
  */
 async function showPreview() {
-    if (currentFields.length === 0) {
-        showToast('No text fields to process', 'warning');
-        return;
-    }
-    
     showLoading('Generating preview...');
     
     try {
@@ -221,7 +250,8 @@ async function showPreview() {
             },
             body: JSON.stringify({
                 sessionId: sessionId,
-                fields: currentFields
+                fields: currentFields,
+                images: currentImages
             })
         });
         
@@ -233,12 +263,12 @@ async function showPreview() {
         
         // Display warnings if any
         const warningsContainer = document.getElementById('warningsContainer');
-        if (data.warnings && data.warnings.length > 0) {
+        if (data.fontWarnings && data.fontWarnings.length > 0) {
             warningsContainer.classList.remove('hidden');
             warningsContainer.innerHTML = `
-                <div class="warning-title">⚠ OCR Warnings</div>
+                <div class="warning-title">⚠ Font Substitutions</div>
                 <ul class="warning-list">
-                    ${data.warnings.map(w => `<li>${w}</li>`).join('')}
+                    ${data.fontWarnings.map(w => `<li>${w}</li>`).join('')}
                 </ul>
             `;
         } else {
@@ -256,10 +286,10 @@ async function showPreview() {
 }
 
 /**
- * Download regenerated image
+ * Download PDF
  */
-async function downloadImage() {
-    showLoading('Regenerating image...');
+async function downloadPDF() {
+    showLoading('Generating PDF...');
     
     try {
         const response = await fetch(`${API_BASE_URL}/regenerate`, {
@@ -269,13 +299,14 @@ async function downloadImage() {
             },
             body: JSON.stringify({
                 sessionId: sessionId,
-                fields: currentFields
+                fields: currentFields,
+                images: currentImages
             })
         });
         
         if (!response.ok) {
             const data = await response.json();
-            throw new Error(data.error || 'Image regeneration failed');
+            throw new Error(data.error || 'PDF generation failed');
         }
         
         // Download file
@@ -283,14 +314,59 @@ async function downloadImage() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'image_edited.jpg';
+        a.download = 'resume_edited.pdf';
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
         hideLoading();
-        showToast('Image downloaded successfully!', 'success');
+        showToast('PDF downloaded successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast(error.message, 'error');
+        hideLoading();
+    }
+}
+
+/**
+ * Download DOCX
+ */
+async function downloadDOCX() {
+    showLoading('Generating DOCX...');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/export-docx`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                sessionId: sessionId,
+                fields: currentFields,
+                images: currentImages
+            })
+        });
+        
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'DOCX generation failed');
+        }
+        
+        // Download file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'resume_edited.docx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        hideLoading();
+        showToast('DOCX downloaded successfully!', 'success');
         
     } catch (error) {
         console.error('Download error:', error);
@@ -307,7 +383,7 @@ function backToEdit() {
 }
 
 /**
- * Reset and upload new image
+ * Reset and upload new resume
  */
 async function resetUpload() {
     // Clear session on server
@@ -327,8 +403,9 @@ async function resetUpload() {
     
     // Reset state
     sessionId = null;
-    extractedData = null;
+    parsedData = null;
     currentFields = [];
+    currentImages = [];
     fileInput.value = '';
     editForm.innerHTML = '';
     
@@ -390,9 +467,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => {
         toast.style.animation = 'slideInRight 0.3s ease-out reverse';
         setTimeout(() => {
-            if (toastContainer.contains(toast)) {
-                toastContainer.removeChild(toast);
-            }
+            toastContainer.removeChild(toast);
         }, 300);
     }, 4000);
 }
